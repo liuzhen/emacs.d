@@ -49,6 +49,7 @@
 (require-package 'scratch)
 (require-package 'mwe-log-commands)
 
+
 (require 'init-frame-hooks)
 (require 'init-xterm)
 (require 'init-themes)
@@ -158,6 +159,7 @@
             (message "init completed in %.2fms"
                      (sanityinc/time-subtract-millis after-init-time before-init-time))))
 
+(require 'neotree)
 
 (provide 'init)
 
@@ -165,3 +167,4 @@
 ;; coding: utf-8
 ;; no-byte-compile: t
 ;; End:
+(put 'dired-find-alternate-file 'disabled nil)
