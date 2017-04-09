@@ -14,44 +14,79 @@
 
 (require 'cl)
 
-(defun erlang-get-library-path (prefix)
+(defun erlup-libs-of (prefix)
   "Get the erlang library path according to the PREFIX."
-  (ignore-errors (mapcar (lambda (x) (concat x "/ebin")) (directory-files prefix "" "."))))
+  (ignore-errors (mapcar (lambda (x) (concat x "/ebin"))
+                         (directory-files prefix "" "."))))
 
-(defun erlang-library-path ()
+(defun erlup-libs ()
   "Get the erlang library path without argument."
-  (or (erlang-get-library-path "../_build/default/lib/")
-      (erlang-get-library-path "../../../_build/default/lib/")))
+  (or (erlup-libs-of "../_build/default/lib/")
+      (erlup-libs-of "../../../_build/default/lib/")))
 
-(defun erlup-libs (libs)
-  "Format the LIBS to a string."
-  (mapcar (lambda (x) (concat "-I" x)) libs))
+(defun erlup-includes ()
+  "Format the includes to a string."
+  (mapcar (lambda (x) (concat "-I" x))
+          (list "../include/"
+                "../../include/"
+                "../../")))
 
-(defun erlup-paths (paths)
+(defun erlup-code-paths (paths)
   "Format the PATHS to a string."
   (mapcar (lambda (x) (concat "-pa" x)) paths))
 
-(defun erlup-file (node cookie source)
+(defun erlup-beam (tmp-dir source)
+  "Format the beam name with TMP-DIR and SOURCE."
+  (concat tmp-dir
+          (file-name-base source)
+          ".beam"))
+
+(defun erlup-erlc (tmp-dir)
+  "Set up the main command with TMP-DIR."
+  (list "erlc" "-o" tmp-dir))
+
+(defun erlup-erlc-lager ()
+  "Set up the lager related config."
+  (append (list "+{parse_transform, lager_transform}")
+          (list  "+{lager_truncation_size, 1024}")))
+
+(defun erlup-erlc-wall (source)
+  "Set up Wall for SOURCE."
+  (list "-Wall" source))
+
+(defun erlup-erlup (node cookie beam)
+  "Format the command of erlup with NODE, COOKIE, BEAM."
+  (list "erlup" "-n" node "-c" cookie beam))
+
+(defun erlup-compile (source)
+  "Compile SOURCE to temporary file directory."
+  (let ((tmp-dir temporary-file-directory))
+    (let* ((cmd-erlc (-flatten (list (erlup-erlc tmp-dir)
+                                     (erlup-includes)
+                                     (erlup-code-paths (erlup-libs))
+                                     (erlup-erlc-lager)
+                                     (erlup-erlc-wall source))))
+           (cmd (combine-and-quote-strings cmd-erlc)))
+      (message "Compiling %s..." source)
+      (shell-command cmd))))
+
+(defun erlup-up (node cookie source)
   "Erlup to the target NODE with COOKIE, SOURCE is in .erl."
-  (let* ((tmp-dir temporary-file-directory)
-         (command-erlc0 (list "erlc" "-o" tmp-dir))
-         (command-erlc1 (append command-erlc0 (erlup-libs flycheck-erlang-include-path)))
-         (command-erlc2 (append command-erlc1 (erlup-paths (erlang-library-path))))
-         (command-erlc (append command-erlc2 (list "-Wall" source)))
-         (beam-name (concat tmp-dir (file-name-base source) ".beam"))
-         (command-erlup(list "erlup"
-                             "-n" node
-                             "-c" cookie
-                             beam-name)))
-    (shell-command (combine-and-quote-strings command-erlc))
-    (shell-command (combine-and-quote-strings command-erlup))
-    ))
+  (let ((tmp-dir temporary-file-directory))
+    (let* ((cmd-erlup (erlup-erlup node
+                                   cookie
+                                   (erlup-beam tmp-dir source)))
+           (cmd (combine-and-quote-strings cmd-erlup)))
+      (shell-command cmd))))
 
 (defun erlup-buffer ()
   "Erlup the current buffer."
   (interactive)
+
+  (erlup-compile (buffer-file-name))
+
   (cl-loop for erlup-node in erlup-nodes
-           collect (erlup-file
+           collect (erlup-up
                     erlup-node
                     (if (boundp 'erlup-cookie)
                         erlup-cookie
@@ -61,19 +96,18 @@
 (defun erlang-after-load-hook ()
   "Define the erlang hook."
   (interactive)
-  (setq flycheck-erlang-include-path (list "../include/" "../../include/" "../../"))
-  (set (make-local-variable 'flycheck-erlang-library-path) (erlang-library-path))
-  (setq erlang-root-dir "/usr/local/opt/erlang/lib/erlang")
-  (setq exec-path (cons "/usr/local/bin" exec-path))
-  (setq erlang-electric-commands '(erlang-electric-comma
-                                   erlang-electric-gt
-                                   erlang-electric-newline
-                                   erlang-electric-semicolon))
 
-  (require 'erlang-start)
   (global-set-key (kbd "M-i") 'imenu)
-  (global-set-key (kbd "C-c e") 'erlup-buffer))
+  (global-set-key (kbd "C-c C-e") 'erlup-buffer)
 
+  (require 'flycheck-rebar3)
+  (flycheck-rebar3-setup)
+
+  (require 'edts-start))
+
+
+
+;;;
 (add-hook 'erlang-mode-hook 'erlang-after-load-hook)
 
 (provide 'init-erlang)
