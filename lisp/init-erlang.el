@@ -101,9 +101,7 @@
   (global-set-key (kbd "C-c C-e") 'erlup-buffer)
 
   (require 'flycheck-rebar3)
-  (flycheck-rebar3-setup)
-
-  (require 'edts-start))
+  (flycheck-rebar3-setup))
 
 
 
