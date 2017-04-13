@@ -82,7 +82,6 @@
 (defun erlup-buffer ()
   "Erlup the current buffer."
   (interactive)
-
   (erlup-compile (buffer-file-name))
 
   (cl-loop for erlup-node in erlup-nodes
@@ -101,7 +100,15 @@
   (global-set-key (kbd "C-c C-e") 'erlup-buffer)
 
   (require 'flycheck-rebar3)
-  (flycheck-rebar3-setup))
+  (flycheck-rebar3-setup)
+
+  (flycheck-mode)
+
+  (setq erlang-electric-commands '(erlang-electric-comma
+                                   erlang-electric-gt
+                                   erlang-electric-newline
+                                   erlang-electric-semicolon)))
+
 
 
 
