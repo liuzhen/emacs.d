@@ -24,12 +24,16 @@
   (or (erlup-libs-of "../_build/default/lib/")
       (erlup-libs-of "../../../_build/default/lib/")))
 
+(defun erlup-includes-dir ()
+  "Get the erlang include directories."
+  (list "../include/"
+        "../../include/"
+        "../../"))
+
 (defun erlup-includes ()
   "Format the includes to a string."
   (mapcar (lambda (x) (concat "-I" x))
-          (list "../include/"
-                "../../include/"
-                "../../")))
+          (erlup-includes-dir)))
 
 (defun erlup-code-paths (paths)
   "Format the PATHS to a string."
@@ -79,6 +83,12 @@
            (cmd (combine-and-quote-strings cmd-erlup)))
       (shell-command cmd))))
 
+(defun erlup-compile-buffer ()
+  "Erlup the current buffer, only compile it."
+  (interactive)
+  (erlup-compile (buffer-file-name)))
+
+
 (defun erlup-buffer ()
   "Erlup the current buffer."
   (interactive)
@@ -95,14 +105,17 @@
 (defun erlang-after-load-hook ()
   "Define the erlang hook."
   (interactive)
+  (flycheck-mode)
+  (company-mode)
+
+  (setq flycheck-erlang-include-path (erlup-includes-dir))
+  (setq flycheck-erlang-library-path (erlup-libs))
+  (setq erlang-root-dir "/usr/local/opt/erlang/lib/erlang")
+  (setq exec-path (cons "/usr/local/bin" exec-path))
 
   (global-set-key (kbd "M-i") 'imenu)
+  (global-set-key (kbd "C-c e") 'erlup-compile-buffer)
   (global-set-key (kbd "C-c C-e") 'erlup-buffer)
-
-  (require 'flycheck-rebar3)
-  (flycheck-rebar3-setup)
-
-  (flycheck-mode)
 
   (setq erlang-electric-commands '(erlang-electric-comma
                                    erlang-electric-gt
