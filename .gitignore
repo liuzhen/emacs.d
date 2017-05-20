@@ -48,3 +48,4 @@ site-lisp/package/
 elpa-24.5.1
 /.historian
 /.uptimes.el
+/rake.cache
