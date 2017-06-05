@@ -58,6 +58,10 @@
   "Set up Wall for SOURCE."
   (list "-Wall" source))
 
+(defun erlup-erlc-macro ()
+  "Set up the macro for debug."
+  (list "-D" "DEBUG"))
+
 (defun erlup-erlup (node cookie beam)
   "Format the command of erlup with NODE, COOKIE, BEAM."
   (list "erlup" "-n" node "-c" cookie beam))
@@ -69,6 +73,7 @@
                                      (erlup-includes)
                                      (erlup-code-paths (erlup-libs))
                                      (erlup-erlc-lager)
+                                     (erlup-erlc-macro)
                                      (erlup-erlc-wall source))))
            (cmd (combine-and-quote-strings cmd-erlc)))
       (message "Compiling %s..." source)
