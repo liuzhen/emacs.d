@@ -103,6 +103,7 @@
 (require 'init-rails)
 (require 'init-sql)
 (maybe-require-package 'toml-mode)
+(require 'init-docker)
 (maybe-require-package 'terraform-mode)
 
 (require 'init-paredit)
