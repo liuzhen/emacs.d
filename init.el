@@ -102,6 +102,7 @@
 (require 'init-ruby-mode)
 (require 'init-rails)
 (require 'init-sql)
+(require-package 'toml-mode)
 
 (require 'init-paredit)
 (require 'init-lisp)
